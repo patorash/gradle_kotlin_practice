@@ -1,41 +1,40 @@
 package patorash.gradle_kotlin_practice
 
+import org.eclipse.jetty.webapp.WebAppContext
 import org.eclipse.jetty.server.Server
-import org.eclipse.jetty.server.handler.AbstractHandler
-import org.eclipse.jetty.server.Request
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import org.eclipse.jetty.servlet.ServletHandler
-import javax.servlet.http.HttpServlet
+import org.eclipse.jetty.webapp.JettyWebXmlConfiguration
+import org.eclipse.jetty.plus.webapp.PlusConfiguration
+import org.eclipse.jetty.webapp.FragmentConfiguration
+import org.eclipse.jetty.plus.webapp.EnvConfiguration
+import org.eclipse.jetty.webapp.MetaInfConfiguration
+import org.eclipse.jetty.webapp.WebXmlConfiguration
+import org.eclipse.jetty.webapp.WebInfConfiguration
+import org.eclipse.jetty.annotations.AnnotationConfiguration
+import org.eclipse.jetty.webapp.Configuration
+
 
 fun main(args: Array<String>) {
+    // 1. war ファイルの設定
+    val war = WebAppContext()
+    war.setContextPath("/sample")
+    war.setWar("./GradleKotlinPractice.war")
+
+    // 2. @WebServlet とかを有効にしている
+    val configurations: Array<Configuration> = array(
+            AnnotationConfiguration(),
+            WebInfConfiguration(),
+            WebXmlConfiguration(),
+            MetaInfConfiguration(),
+            FragmentConfiguration(),
+            EnvConfiguration(),
+            PlusConfiguration(),
+            JettyWebXmlConfiguration()
+    )
+
+    war.setConfigurations(configurations)
+
     val server = Server(1234)
-
-    // 単純に全てのアクセスをHelloJettyHandlerに丸投げする
-    // server.setHandler(HelloJettyHandler())
-
-    // ServeletHandlerを定義して、URLごとにクラスをマッピングして処理を行う
-    val handler = ServletHandler()
-    handler.addServletWithMapping(javaClass<SampleServlet>(), "/sample")
-
-    server.setHandler(handler)
-    server.start()
-    server.join()
-}
-
-class HelloJettyHandler : AbstractHandler() {
-    override fun handle(target: String?, baseRequest: Request?, request: HttpServletRequest?, response: HttpServletResponse?) {
-        System.out.println("target = " + target)
-
-        response!!.setContentType("text/html;charset=utf-8")
-        response.setStatus(HttpServletResponse.SC_OK)
-        baseRequest!!.setHandled(true)
-        response.getWriter().println("<h1>Hello Jetty!!</h1>")
-    }
-}
-
-class SampleServlet : HttpServlet() {
-    override fun doGet(req: HttpServletRequest?, resp: HttpServletResponse?) {
-        resp!!.getWriter().println("Servlet on Jetty.")
-    }
+    server.setHandler(war);
+    server.start();
+    server.join();
 }
